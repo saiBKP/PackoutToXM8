@@ -67,7 +67,7 @@ details{margin:6px 0}summary{cursor:pointer;font-weight:600}
  </div>
  <div class="card" id="outcard" style="display:none">
   <h2>3 · Copy into XM8</h2>
-  <div class="row"><button class="pri" id="copy">Copy to clipboard</button><button id="dl">Download .txt</button><span id="msg" class="ok"></span></div>
+  <div class="row"><button class="pri" id="copy">Copy to clipboard</button><button id="dl">Download .txt</button><button id="png">Download table as image (PNG)</button><span id="msg" class="ok"></span></div>
   <div id="outs"></div>
  </div>
 </div>
@@ -177,14 +177,20 @@ function build(roomSet,label){
     if($('hide0').checked)cols=cols.filter(k=>sum(k)!==0);
     if(!cols.length)return;
     const tot={room:'TOTAL',vals:s.hdr.map((h,k)=>sum(k))};
-    const all=$('tot').checked&&rows.length>1?[...rows,tot]:rows;
+    const all=$('tot').checked&&rows.length>1&&fmt!=='lines'?[...rows,tot]:rows;
     out.push(s.title.toUpperCase()+(label?' — '+label:''));
     if(fmt==='lines'){
-      all.forEach(d=>{
-        const parts=cols.map(k=>d.vals[k]).map((v,x)=>[v,cols[x]]).filter(([v])=>v!==null&&v!==0&&v!=='')
-          .map(([v,k])=>v+' '+nm(s.hdr[k]));
-        out.push(d.room+': '+(parts.join(', ')||'none'));
-      });
+      const isSum=h=>/^(single|total|boxed inventory)/i.test(h);
+      const fmtRow=d=>d.room+': '+(cols.map(k=>[d.vals[k],k]).filter(([v])=>v!==null&&v!==0&&v!=='')
+          .map(([v,k])=>v+' '+nm(s.hdr[k])).join(', ')||'none');
+      out.push(rows.map(fmtRow).join('\n\n'));
+      if($('tot').checked&&rows.length>1){
+        const item=k=>tot.vals[k]+' '+nm(s.hdr[k]);
+        const sm=cols.filter(k=>isSum(s.hdr[k])&&tot.vals[k]!==0),ty=cols.filter(k=>!isSum(s.hdr[k])&&tot.vals[k]!==0);
+        out.push('\nTOTAL:');
+        if(sm.length)out.push(sm.map(item).join('\n'));
+        if(ty.length){out.push('\n'+(sm.length?'Boxes by type:':'Totals:'));out.push(ty.map(item).join('\n'))}
+      }
     }else{
       const head=['Room',...cols.map(k=>nm(s.hdr[k]))];
       const body=all.map(d=>[d.room,...cols.map(k=>d.vals[k]===null?'':String(d.vals[k]))]);
@@ -232,6 +238,36 @@ async function copy(t){
 $('copy').onclick=()=>copy(window._outs.map(o=>o.text).join('\n\n=====\n\n'));
 $('dl').onclick=()=>{const b=new Blob([window._outs.map(o=>o.text).join('\n\n=====\n\n')],{type:'text/plain'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='packout_note.txt';a.click()};
+
+$('png').onclick=()=>{
+  const chosen=rooms.filter(r=>sel[r]);const font='12px Arial,Helvetica,sans-serif';
+  const tabs=[];
+  secs.forEach((s,i)=>{if(secOff[i])return;
+    const rows=s.data.filter(d=>chosen.includes(d.room));if(!rows.length)return;
+    let cols=s.hdr.map((h,k)=>k).filter(k=>!colOff[i+':'+k]);
+    const sum=k=>rows.reduce((a,d)=>a+(typeof d.vals[k]==='number'?d.vals[k]:0),0);
+    if($('hide0').checked)cols=cols.filter(k=>sum(k)!==0);if(!cols.length)return;
+    tabs.push({title:s.title,head:['Room',...cols.map(k=>s.hdr[k])],
+      body:[...(rows.length>1?[{b:1,c:['TOTAL',...cols.map(k=>String(sum(k)))]}]:[]),...rows.map(d=>({c:[d.room,...cols.map(k=>d.vals[k]===null?'':String(d.vals[k]))]}))]});});
+  const cv=document.createElement('canvas'),x=cv.getContext('2d');x.font=font;
+  const wrap=(txt,w)=>{const ws=txt.replace(/-/g,'- ').replace(/- +/g,'-\u200b ').split(' ');const ls=[];let c='';ws.forEach(q=>{const n=c?c+' '+q:q;if(x.measureText(n).width>w&&c){ls.push(c);c=q}else c=n});ls.push(c);return ls};
+  const P=10,CW=74,H=job.split('\n'),LH=15;let y=P,lay=[];let W=0;
+  tabs.forEach(t=>{const rw=Math.max(...t.body.map(b=>x.measureText(b.c[0]).width))+16;
+    const heads=t.head.map((h,c)=>c?wrap(h,CW-8):[h]);const hl=Math.max(...heads.map(a=>a.length));
+    t.rw=rw;t.heads=heads;t.hl=hl;W=Math.max(W,rw+CW*(t.head.length-1)+3*P)});
+  y=P+LH*H.length+8;tabs.forEach(t=>{t.y=y;y+=22+t.hl*LH+8+t.body.length*20+16});
+  cv.width=Math.ceil(W);cv.height=Math.ceil(y);x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);
+  x.font=font;x.textBaseline='middle';x.fillStyle='#000';
+  H.forEach((l,i)=>{x.font=(i===0?'bold ':'')+font;x.fillText(l,P,P+LH*i+8)});
+  tabs.forEach(t=>{let yy=t.y;x.font='bold 14px Arial';x.fillStyle='#1f5fbf';x.fillText(t.title,P,yy+8);yy+=22;
+    const hh=t.hl*LH+8;x.fillStyle='#e9eef7';x.fillRect(P,yy,t.rw+CW*(t.head.length-1),hh);x.fillStyle='#000';x.font='bold 11px Arial';
+    t.heads.forEach((a,c)=>a.forEach((l,li)=>{const cx=c?P+t.rw+CW*(c-1)+CW/2:P+4;x.textAlign=c?'center':'left';x.fillText(l.replace(/\u200b/g,''),cx,yy+8+li*LH+LH/2-2)}));
+    yy+=hh;x.textAlign='left';
+    t.body.forEach((b,ri)=>{if(ri%2)(x.fillStyle='#f6f7f9',x.fillRect(P,yy,t.rw+CW*(t.head.length-1),20));x.fillStyle='#000';x.font=(b.b?'bold ':'')+'12px Arial';
+      b.c.forEach((v,c)=>{x.textAlign=c?'center':'left';x.fillText(v,c?P+t.rw+CW*(c-1)+CW/2:P+4,yy+10)});
+      x.textAlign='left';x.strokeStyle='#d5dae3';x.beginPath();x.moveTo(P,yy+20);x.lineTo(P+t.rw+CW*(t.head.length-1),yy+20);x.stroke();yy+=20});});
+  cv.toBlob(bl=>{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='packout_table.png';a.click()});
+};
 $('all').onclick=()=>{rooms.forEach(r=>sel[r]=true);renderRooms();update()};
 $('none').onclick=()=>{rooms.forEach(r=>sel[r]=false);renderRooms();update()};
 ['fmt','grp','hide0','abbr','hdr','tot'].forEach(i=>$(i).onchange=update);
