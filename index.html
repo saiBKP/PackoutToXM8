@@ -3,48 +3,103 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pack-Out to XM8 Notes</title>
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--mute:#667085;--line:#e1e5ec;--acc:#1f5fbf;--accbg:#e8f0fc}
-@media (prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1c2028;--ink:#e8ebf1;--mute:#9aa4b5;--line:#2c323d;--acc:#6ea0f0;--accbg:#1f2a40}}
+/* ===== Apple-style design tokens ===== */
+:root{
+  --bg-primary:#ffffff;--bg-secondary:#f5f5f7;--text-primary:#1d1d1f;--text-secondary:#6e6e73;
+  --accent-blue:#0071e3;--accent-blue-soft:rgba(0,113,227,.10);--accent-green:#1f8f3a;
+  --border-color:rgba(0,0,0,.10);--glass:rgba(255,255,255,.72);--card:#ffffff;--field:#f5f5f7;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04),0 1px 4px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.08),0 16px 32px rgba(0,0,0,.08);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-2xl:24px;--r-full:9999px;
+  --s2:.5rem;--s4:1rem;--s6:1.5rem;--s8:2rem;--s12:3rem;--s16:4rem;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg-primary:#000000;--bg-secondary:#1d1d1f;--text-primary:#f5f5f7;--text-secondary:#a1a1a6;
+  --accent-blue:#0a84ff;--accent-blue-soft:rgba(10,132,255,.16);--accent-green:#30d158;
+  --border-color:rgba(255,255,255,.12);--glass:rgba(29,29,31,.72);--card:#1c1c1e;--field:#2c2c2e;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);--shadow-md:0 4px 12px rgba(0,0,0,.5);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.5),0 16px 32px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-header{padding:16px 20px;border-bottom:1px solid var(--line);background:var(--card)}
-h1{font-size:18px;margin:0 0 2px}header p{margin:0;color:var(--mute)}
-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;padding:16px 20px;max-width:1300px;margin:auto}
-@media(max-width:800px){main{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
-.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin:0 0 10px}
-#drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--mute);cursor:pointer}
-#drop.over{border-color:var(--acc);background:var(--accbg)}
-.floor{margin:8px 0 2px;font-weight:600;display:flex;align-items:center;gap:6px}
-.room{display:flex;align-items:center;gap:6px;padding:2px 0 2px 20px}
-.room span.n{flex:1}.room select{font-size:12px;max-width:110px}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg-secondary);color:var(--text-primary);padding-top:52px;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',Roboto,sans-serif;
+  font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+/* Navigation: frosted glass */
+.navbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:52px;display:flex;align-items:center;justify-content:space-between;
+  gap:var(--s4);padding:0 max(var(--s4),calc((100vw - 1180px)/2));
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--border-color)}
+.brand{font-weight:600;letter-spacing:-.01em;font-size:.95rem;white-space:nowrap}
+.seg{display:inline-flex;background:var(--field);border-radius:var(--r-full);padding:3px;gap:2px}
+.tab{white-space:nowrap;border:0;background:transparent;color:var(--text-secondary);padding:6px 16px;min-height:32px;border-radius:var(--r-full);
+  font:inherit;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease)}
+.tab.on{background:var(--card);color:var(--text-primary);box-shadow:var(--shadow-md)}
+/* Hero */
+.hero{text-align:center;padding:var(--s16) var(--s4) var(--s8);max-width:900px;margin:auto}
+.hero h1{font-size:clamp(2.25rem,5vw + 1rem,4rem);font-weight:700;line-height:1.08;letter-spacing:-.03em;margin:0 0 var(--s4)}
+.gradient-text{background:linear-gradient(90deg,#0071e3,#8e5cf7 55%,#ff5a8a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:clamp(1.05rem,1vw + .9rem,1.35rem);color:var(--text-secondary);margin:0 auto;max-width:640px}
+.priv{display:inline-flex;align-items:center;gap:6px;margin-top:var(--s4);font-size:.8125rem;color:var(--text-secondary);
+  background:var(--card);border:1px solid var(--border-color);border-radius:var(--r-full);padding:4px 12px}
+main{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:var(--s6);padding:var(--s4) var(--s4) var(--s16);max-width:1180px;margin:auto}
+main>div,main>.card{min-width:0}
+@media(max-width:860px){main,#tab2 main{grid-template-columns:minmax(0,1fr)!important}}
+@media(max-width:560px){.brand{display:none}.navbar{justify-content:center}.hero{padding-top:var(--s12)}.card{padding:var(--s4)}}
+/* Cards */
+.card{background:var(--card);border-radius:var(--r-2xl);padding:var(--s6);box-shadow:var(--shadow-md);border:1px solid var(--border-color);
+  animation:fadeInUp 600ms ease-out both}
+.card h2{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-secondary);font-weight:600;margin:0 0 var(--s4)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+/* Drop zones */
+#drop,#ddrop{border:1.5px dashed var(--border-color);border-radius:var(--r-lg);padding:var(--s8) var(--s4);text-align:center;
+  color:var(--text-secondary);cursor:pointer;background:var(--field);transition:all .3s var(--ease)}
+#drop:hover,#ddrop:hover,#drop.over,#ddrop.over{border-color:var(--accent-blue);background:var(--accent-blue-soft);color:var(--accent-blue);transform:scale(1.01)}
+/* Controls */
+button,select,input[type=text],input:not([type]){font:inherit;color:var(--text-primary)}
+button{min-height:44px;padding:0 var(--s6);border-radius:var(--r-full);border:1.5px solid var(--accent-blue);background:transparent;
+  color:var(--accent-blue);font-weight:500;cursor:pointer;transition:all .3s var(--ease)}
+button:hover{background:var(--accent-blue);color:#fff}
+button.pri{background:var(--accent-blue);color:#fff}
+button.pri:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,113,227,.3)}
+.tab,.tab:hover{min-height:32px;border:0}
+.tab:hover:not(.on){background:transparent;color:var(--text-primary)}
+select,input#drange,input#dname{min-height:40px;padding:0 var(--s4);border-radius:var(--r-md);border:1px solid var(--border-color);background:var(--field)}
+input#drange,input#dname{width:100%;max-width:170px}
+select{max-width:100%}
+input[type=checkbox]{accent-color:var(--accent-blue);width:18px;height:18px;vertical-align:middle;margin-right:4px}
 label{cursor:pointer}
-.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:8px}
-select,button{font:inherit;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600;padding:8px 16px}
-button:hover{filter:brightness(.96)}
-textarea{width:100%;min-height:360px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;white-space:pre;overflow:auto}
-.chips{display:flex;flex-wrap:wrap;gap:6px 12px;margin:4px 0 8px}
-.chips label{font-size:12.5px}
-details{margin:6px 0}summary{cursor:pointer;font-weight:600}
-.muted{color:var(--mute)}.ok{color:#1a7f4b;font-weight:600}
-.tabs{display:flex;gap:6px;margin-top:10px}
-.tab{border-radius:8px 8px 0 0;padding:7px 14px;font-weight:600}
-.tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-#ddrop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--mute);cursor:pointer}
-#ddrop.over{border-color:var(--acc);background:var(--accbg)}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:8px}
-.th{border:2px solid var(--line);border-radius:8px;padding:6px;text-align:center;cursor:pointer;background:var(--bg)}
-.th.on{border-color:var(--acc);background:var(--accbg)}
-.th canvas,.th img{max-width:100%;height:auto;display:block;margin:0 auto 4px;background:#fff}
+:focus-visible{outline:2px solid var(--accent-blue);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);align-items:center;margin-bottom:var(--s4)}
+.muted{color:var(--text-secondary);font-size:.875rem}.ok{color:var(--accent-green);font-weight:600}
+/* Room list */
+.floor{margin:var(--s4) 0 var(--s2);font-weight:600;display:flex;align-items:center;gap:var(--s2)}
+.room{display:flex;align-items:center;gap:var(--s2);padding:6px 0 6px var(--s6);border-top:1px solid var(--border-color)}
+.room span.n{flex:1}.room select{font-size:.8125rem;min-height:32px;max-width:112px}
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);margin:var(--s2) 0 var(--s4)}.chips label{font-size:.875rem}
+details{margin:var(--s2) 0;border-top:1px solid var(--border-color);padding-top:var(--s2)}summary{cursor:pointer;font-weight:600}
+/* Output */
+textarea{width:100%;min-height:360px;font:.8125rem/1.5 ui-monospace,'SF Mono',Menlo,Consolas,monospace;background:var(--field);color:var(--text-primary);
+  border:1px solid var(--border-color);border-radius:var(--r-lg);padding:var(--s4);resize:vertical;white-space:pre;overflow:auto}
+/* Thumbnails: lift on hover */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s4);margin-top:var(--s2)}
+.th{border:2px solid transparent;border-radius:var(--r-lg);padding:var(--s2);text-align:center;cursor:pointer;background:var(--field);
+  transition:transform 300ms var(--ease),box-shadow 300ms var(--ease),border-color 300ms var(--ease)}
+.th:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.th.on{border-color:var(--accent-blue);background:var(--accent-blue-soft)}
+.th canvas,.th img{max-width:100%;height:auto;display:block;margin:0 auto var(--s2);background:#fff;border-radius:var(--r-sm);box-shadow:var(--shadow-sm)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style></head>
 <body>
-<header><h1>BKP Estimating Helpers</h1>
-<p>Two tools for getting documentation into XM8. Everything runs on your computer; no files are uploaded.</p>
-<div class="tabs"><button id="tb1" class="tab on">Pack-Out → XM8 Note</button><button id="tb2" class="tab">Document → JPEG</button></div></header>
+<nav class="navbar" aria-label="Tools"><span class="brand">BKP Estimating Helpers</span>
+<div class="seg" role="tablist"><button id="tb1" class="tab on" role="tab">Pack-Out Note</button><button id="tb2" class="tab" role="tab">Document to JPEG</button></div></nav>
+<section class="hero"><h1 id="htitle">Pack-out to XM8, <span class="gradient-text">in one paste.</span></h1>
+<p id="hsub">Load the iCat Excel export, choose rooms and floors, and copy clean text for the F9 note.</p>
+<span class="priv">&#128274; Runs on your computer. Nothing is uploaded.</span></section>
 <div id="tab1"><main>
 <div>
- <div class="card" style="margin-bottom:16px">
+ <div class="card" style="margin-bottom:24px">
   <div id="drop">Drop the Pack-Out Summary Excel file here, or click to browse</div>
   <input id="file" type="file" accept=".xlsx,.xlsm,.xls" hidden>
   <div id="jobline" class="muted" style="margin-top:8px"></div>
@@ -84,7 +139,7 @@ details{margin:6px 0}summary{cursor:pointer;font-weight:600}
 </main></div>
 <div id="tab2" style="display:none"><main style="grid-template-columns:minmax(280px,340px) 1fr">
  <div>
-  <div class="card" style="margin-bottom:16px">
+  <div class="card" style="margin-bottom:24px">
    <h2>1 · Add a document</h2>
    <div id="ddrop">Drop a PDF or image(s) here, or click to browse</div>
    <input id="dfile" type="file" accept=".pdf,image/*" multiple hidden>
@@ -354,7 +409,7 @@ $('png').onclick=()=>{
   cv.width=Math.ceil(W);cv.height=Math.ceil(y);x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);
   x.font=font;x.textBaseline='middle';x.fillStyle='#000';
   H.forEach((l,i)=>{x.font=(i===0?'bold ':'')+font;x.fillText(l,P,P+LH*i+8)});
-  tabs.forEach(t=>{let yy=t.y;x.font='bold 14px Arial';x.fillStyle='#1f5fbf';x.fillText(t.title,P,yy+8);yy+=22;
+  tabs.forEach(t=>{let yy=t.y;x.font='bold 14px Arial';x.fillStyle='#0071e3';x.fillText(t.title,P,yy+8);yy+=22;
     const hh=t.hl*LH+8;x.fillStyle='#e9eef7';x.fillRect(P,yy,t.rw+CW*(t.head.length-1),hh);x.fillStyle='#000';x.font='bold 11px Arial';
     t.heads.forEach((a,c)=>a.forEach((l,li)=>{const cx=c?P+t.rw+CW*(c-1)+CW/2:P+4;x.textAlign=c?'center':'left';x.fillText(l.replace(/\u200b/g,''),cx,yy+8+li*LH+LH/2-2)}));
     yy+=hh;x.textAlign='left';
@@ -374,7 +429,8 @@ $('drop').ondragleave=()=>$('drop').classList.remove('over');
 $('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])};
 
 /* ===== Document -> JPEG ===== */
-function showTab(n){$('tab1').style.display=n===1?'':'none';$('tab2').style.display=n===2?'':'none';
+const HERO={1:['Pack-out to XM8, <span class="gradient-text">in one paste.</span>','Load the iCat Excel export, choose rooms and floors, and copy clean text for the F9 note.'],2:['Any document, <span class="gradient-text">as a JPEG.</span>','Pick the pages you need and download them ready for the XM8 Photos section.']};
+function showTab(n){$('htitle').innerHTML=HERO[n][0];$('hsub').textContent=HERO[n][1];window.scrollTo({top:0,behavior:'smooth'});$('tab1').style.display=n===1?'':'none';$('tab2').style.display=n===2?'':'none';
   $('tb1').classList.toggle('on',n===1);$('tb2').classList.toggle('on',n===2)}
 $('tb1').onclick=()=>showTab(1);$('tb2').onclick=()=>showTab(2);
 let pages=[],pdfWorkerSet=false;  // {label, getCanvas(scale,max)->Promise<canvas>, thumb, on}
